@@ -47,9 +47,6 @@ void count(char *path, struct filecount *counts) {
     struct stat statbuf;     /* buffer for stat() info */
 #endif
 
-#ifdef DEBUG
-    fprintf(stderr, "Opening dir %s\n", path);
-#endif
     dir = opendir(path);
 
     /* opendir failed... file likely doesn't exist or isn't a directory */
@@ -89,9 +86,6 @@ void count(char *path, struct filecount *counts) {
       }
     }
 
-#ifdef DEBUG
-    fprintf(stderr, "Closing dir %s\n", path);
-#endif
     closedir(dir);
 }
 
@@ -104,16 +98,6 @@ int main(int argc, char *argv[]) {
         dir = argv[1];
     else
         dir = ".";
-
-#ifdef DEBUG
-#if PREFER_STAT
-    fprintf(stderr, "Compiled with PREFER_STAT. Using stat()\n");
-#elif defined ( _DIRENT_HAVE_D_TYPE )
-    fprintf(stderr, "Using dirent.d_type\n");
-#else
-    fprintf(stderr, "Don't have dirent.d_type, falling back to using stat()\n");
-#endif
-#endif
 
     count(dir, &counts);
 
