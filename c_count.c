@@ -12,6 +12,13 @@
  * various suggestions and improvements to the original code. Any additional
  * contributors can be found by looking at the GitHub revision history from
  * this point forward..
+ *
+ * 20180323: Changed for use in a Python package by Gertjan van den Burg.
+ *   - Removed main
+ *   - Added options for recurse, hidden, and quiet
+ *   - Removed debug code
+ *   - Reformatted long lines
+ *
  */
 #include <stdio.h>
 #include <dirent.h>
@@ -128,4 +135,22 @@ void count(char *path, struct filecount *counts, bool recursive, bool hidden,
 		}
 	}
 	closedir(dir);
+}
+
+
+void c_fast_file_count(char *path, long l_recursive, long l_hidden,
+		long l_quiet, long *result_files, long *result_dirs)
+{
+	bool recursive = l_recursive;
+	bool hidden = l_hidden;
+	bool quiet = l_quiet;
+
+	struct filecount counts;
+	counts.files = 0;
+	counts.dirs = 0;
+
+	count(path, &counts, recursive, hidden, quiet);
+
+	*result_files = counts.files;
+	*result_dirs = counts.dirs;
 }
