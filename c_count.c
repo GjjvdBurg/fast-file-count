@@ -88,24 +88,3 @@ void count(char *path, struct filecount *counts) {
 
     closedir(dir);
 }
-
-int main(int argc, char *argv[]) {
-    struct filecount counts;
-    char *dir;
-    counts.files = 0;
-    counts.dirs = 0;
-    if(argc > 1)
-        dir = argv[1];
-    else
-        dir = ".";
-
-    count(dir, &counts);
-
-    /* If we found nothing, this is probably an error which has already been printed */
-    if(0 < counts.files || 0 < counts.dirs) {
-        printf("%ld files and %ld directories in %s\n", counts.files, counts.dirs, dir);
-    }
-
-    return 0;
-}
-
