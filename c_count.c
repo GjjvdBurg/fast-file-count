@@ -43,7 +43,7 @@ void count(char *path, struct filecount *counts) {
     struct dirent *ent;      /* directory entry currently being processed */
     char subpath[PATH_MAX];  /* buffer for building complete subdir and file names */
     /* Some systems don't have dirent.d_type field; we'll have to use stat() instead */
-#if PREFER_STAT || !defined ( _DIRENT_HAVE_D_TYPE )
+#if !defined ( _DIRENT_HAVE_D_TYPE )
     struct stat statbuf;     /* buffer for stat() info */
 #endif
 
@@ -62,7 +62,7 @@ void count(char *path, struct filecount *counts) {
       }
 
 /* Use dirent.d_type if present, otherwise use stat() */
-#if ( defined ( _DIRENT_HAVE_D_TYPE ) && !PREFER_STAT)
+#if ( defined ( _DIRENT_HAVE_D_TYPE ))
       if(DT_DIR == ent->d_type) {
 #else
       sprintf(subpath, "%s%c%s", path, PATH_SEPARATOR, ent->d_name);
