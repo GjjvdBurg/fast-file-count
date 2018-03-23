@@ -24,9 +24,9 @@
 #if defined(WIN32) || defined(_WIN32)
 #include <Windows.h>
 #define ON_WINDOWS
-#define PATH_SEPARATOR '\\'
+#define PATH_SEP '\\'
 #else
-#define PATH_SEPARATOR '/'
+#define PATH_SEP '/'
 #endif
 
 /* A custom structure to hold separate file and directory counts */
@@ -50,14 +50,22 @@ bool str_startswith(const char *str, const char *pre)
  * path - relative pathname of a directory whose files should be counted
  * counts - pointer to struct containing file/dir counts
  */
-void count(char *path, struct filecount *counts, bool recursive, bool hidden, bool quiet) {
-	DIR *dir;                /* dir structure we are reading */
-	struct dirent *ent;      /* directory entry currently being processed */
-	char subpath[PATH_MAX];  /* buffer for building complete subdir and file names */
-	/* Some systems don't have dirent.d_type field; we'll have to use stat() instead */
-#if !defined ( _DIRENT_HAVE_D_TYPE )
-	struct stat statbuf;     /* buffer for stat() info */
-#endif
+void count(char *path, struct filecount *counts, bool recursive, bool hidden, 
+		bool quiet) {
+	long len;
+	/* dir structure we are reading */
+	DIR *dir;
+	/* directory entry currently being processed */
+	struct dirent *ent;
+	/* buffer for building complete subdir and file names */
+	char subpath[PATH_MAX];
+
+	/* Some systems don't have dirent.d_type field; we'll have to use 
+	 * stat() instead */
+	#if !defined ( _DIRENT_HAVE_D_TYPE )
+	/* buffer for stat() info */
+	struct stat statbuf;
+	#endif
 
 	dir = opendir(path);
 
@@ -69,15 +77,17 @@ void count(char *path, struct filecount *counts, bool recursive, bool hidden, bo
 	}
 
 	while((ent = readdir(dir))) {
-		if (strlen(path) + 1 + strlen(ent->d_name) > PATH_MAX) {
+		len = strlen(path) + 1 + strlen(ent->d_name);
+		if (len > PATH_MAX) {
 			if (!quiet)
-				fprintf(stdout, "path too long (%ld) %s%c%s", (strlen(path) + 1 + strlen(ent->d_name)), path, PATH_SEPARATOR, ent->d_name);
+				fprintf(stdout, "path too long (%ld) %s%c%s", 
+						len, path, PATH_SEP, ent->d_name);
 			return;
 		}
 
 		if (!hidden) {
 			#ifdef ON_WINDOWS
-			sprintf(subpath, "%s%c%s", path, PATH_SEPARATOR, ent->d_name);
+			sprintf(subpath, "%s%c%s", path, PATH_SEP, ent->d_name);
 			if (GetFileAttribute(_T(subpath)) & FILE_ATTRIBUTE_HIDDEN)
 				continue;
 			#else
@@ -90,7 +100,7 @@ void count(char *path, struct filecount *counts, bool recursive, bool hidden, bo
 		#if ( defined ( _DIRENT_HAVE_D_TYPE ))
 		if(DT_DIR == ent->d_type) {
 		#else
-		sprintf(subpath, "%s%c%s", path, PATH_SEPARATOR, ent->d_name);
+		sprintf(subpath, "%s%c%s", path, PATH_SEP, ent->d_name);
 		if(lstat(subpath, &statbuf)) {
 			if (!quiet)
 				perror(subpath);
@@ -101,12 +111,14 @@ void count(char *path, struct filecount *counts, bool recursive, bool hidden, bo
 		#endif
 			/* Skip "." and ".." directory entries... they are not
 			 * "real" directories */
-			if(0 == strcmp("..", ent->d_name) || 0 == strcmp(".", ent->d_name))
+			if (strcmp(".", ent->d_name) == 0)
+				continue;
+			if (strcmp("..", ent->d_name) == 0)
 				continue;
 
 			// if we have d_type, we don't have subpath yet
 			#if ( defined ( _DIRENT_HAVE_D_TYPE ))
-			sprintf(subpath, "%s%c%s", path, PATH_SEPARATOR, ent->d_name);
+			sprintf(subpath, "%s%c%s", path, PATH_SEP, ent->d_name);
 			#endif
 			counts->dirs++;
 			if (recursive)
