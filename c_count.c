@@ -21,10 +21,12 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 
-#if defined(WIN32) || defined(_WIN32) 
-#define PATH_SEPARATOR '\\' 
+#if defined(WIN32) || defined(_WIN32)
+#include <Windows.h>
+#define ON_WINDOWS
+#define PATH_SEPARATOR '\\'
 #else
-#define PATH_SEPARATOR '/' 
+#define PATH_SEPARATOR '/'
 #endif
 
 /* A custom structure to hold separate file and directory counts */
@@ -33,13 +35,22 @@ struct filecount {
 	long files;
 };
 
+
+bool str_startswith(const char *str, const char *pre)
+{
+	size_t lenpre = strlen(pre),
+	       lenstr = strlen(str);
+	return lenstr < lenpre ? false : strncmp(pre, str, lenpre) == 0;
+}
+
+
 /*
  * counts the number of files and directories in the specified directory.
  *
  * path - relative pathname of a directory whose files should be counted
  * counts - pointer to struct containing file/dir counts
  */
-void count(char *path, struct filecount *counts, bool recursive, bool quiet) {
+void count(char *path, struct filecount *counts, bool recursive, bool hidden, bool quiet) {
 	DIR *dir;                /* dir structure we are reading */
 	struct dirent *ent;      /* directory entry currently being processed */
 	char subpath[PATH_MAX];  /* buffer for building complete subdir and file names */
@@ -64,6 +75,17 @@ void count(char *path, struct filecount *counts, bool recursive, bool quiet) {
 			return;
 		}
 
+		if (!hidden) {
+			#ifdef ON_WINDOWS
+			sprintf(subpath, "%s%c%s", path, PATH_SEPARATOR, ent->d_name);
+			if (GetFileAttribute(_T(subpath)) & FILE_ATTRIBUTE_HIDDEN)
+				continue;
+			#else
+			if (str_startswith(ent->d_name, "."))
+				continue;
+			#endif
+		}
+
 		/* Use dirent.d_type if present, otherwise use stat() */
 #if ( defined ( _DIRENT_HAVE_D_TYPE ))
 		if(DT_DIR == ent->d_type) {
@@ -85,7 +107,7 @@ void count(char *path, struct filecount *counts, bool recursive, bool quiet) {
 				sprintf(subpath, "%s%c%s", path, PATH_SEPARATOR, ent->d_name);
 				counts->dirs++;
 				if (recursive)
-					count(subpath, counts, recursive, quiet);
+					count(subpath, counts, recursive, hidden, quiet);
 			}
 		} else {
 			counts->files++;
