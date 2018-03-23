@@ -87,9 +87,9 @@ void count(char *path, struct filecount *counts, bool recursive, bool hidden, bo
 		}
 
 		/* Use dirent.d_type if present, otherwise use stat() */
-#if ( defined ( _DIRENT_HAVE_D_TYPE ))
+		#if ( defined ( _DIRENT_HAVE_D_TYPE ))
 		if(DT_DIR == ent->d_type) {
-#else
+		#else
 		sprintf(subpath, "%s%c%s", path, PATH_SEPARATOR, ent->d_name);
 		if(lstat(subpath, &statbuf)) {
 			if (!quiet)
@@ -98,21 +98,22 @@ void count(char *path, struct filecount *counts, bool recursive, bool hidden, bo
 		}
 
 		if(S_ISDIR(statbuf.st_mode)) {
-#endif
-			/* Skip "." and ".." directory entries... they are not 
+		#endif
+			/* Skip "." and ".." directory entries... they are not
 			 * "real" directories */
-			if(0 == strcmp("..", ent->d_name) || 0 == strcmp(".", ent->d_name)) {
-				/*              fprintf(stderr, "This is %s, skipping\n", ent->d_name); */
-			} else {
-				sprintf(subpath, "%s%c%s", path, PATH_SEPARATOR, ent->d_name);
-				counts->dirs++;
-				if (recursive)
-					count(subpath, counts, recursive, hidden, quiet);
-			}
+			if(0 == strcmp("..", ent->d_name) || 0 == strcmp(".", ent->d_name))
+				continue;
+
+			// if we have d_type, we don't have subpath yet
+			#if ( defined ( _DIRENT_HAVE_D_TYPE ))
+			sprintf(subpath, "%s%c%s", path, PATH_SEPARATOR, ent->d_name);
+			#endif
+			counts->dirs++;
+			if (recursive)
+				count(subpath, counts, recursive, hidden, quiet);
 		} else {
 			counts->files++;
 		}
 	}
-
 	closedir(dir);
 }
