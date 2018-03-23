@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <sys/stat.h>
+#include <stdbool.h>
 
 #if defined(WIN32) || defined(_WIN32) 
 #define PATH_SEPARATOR '\\' 
@@ -38,7 +39,7 @@ struct filecount {
  * path - relative pathname of a directory whose files should be counted
  * counts - pointer to struct containing file/dir counts
  */
-void count(char *path, struct filecount *counts) {
+void count(char *path, struct filecount *counts, bool recursive, bool quiet) {
 	DIR *dir;                /* dir structure we are reading */
 	struct dirent *ent;      /* directory entry currently being processed */
 	char subpath[PATH_MAX];  /* buffer for building complete subdir and file names */
@@ -51,13 +52,15 @@ void count(char *path, struct filecount *counts) {
 
 	/* opendir failed... file likely doesn't exist or isn't a directory */
 	if(NULL == dir) {
-		perror(path);
+		if (!quiet)
+			perror(path);
 		return;
 	}
 
 	while((ent = readdir(dir))) {
 		if (strlen(path) + 1 + strlen(ent->d_name) > PATH_MAX) {
-			fprintf(stdout, "path too long (%ld) %s%c%s", (strlen(path) + 1 + strlen(ent->d_name)), path, PATH_SEPARATOR, ent->d_name);
+			if (!quiet)
+				fprintf(stdout, "path too long (%ld) %s%c%s", (strlen(path) + 1 + strlen(ent->d_name)), path, PATH_SEPARATOR, ent->d_name);
 			return;
 		}
 
@@ -67,7 +70,8 @@ void count(char *path, struct filecount *counts) {
 #else
 		sprintf(subpath, "%s%c%s", path, PATH_SEPARATOR, ent->d_name);
 		if(lstat(subpath, &statbuf)) {
-			perror(subpath);
+			if (!quiet)
+				perror(subpath);
 			return;
 		}
 
@@ -80,7 +84,8 @@ void count(char *path, struct filecount *counts) {
 			} else {
 				sprintf(subpath, "%s%c%s", path, PATH_SEPARATOR, ent->d_name);
 				counts->dirs++;
-				count(subpath, counts);
+				if (recursive)
+					count(subpath, counts, recursive, quiet);
 			}
 		} else {
 			counts->files++;
