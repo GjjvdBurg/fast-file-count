@@ -40,8 +40,8 @@ typedef enum { false, true } bool;
 
 /* A custom structure to hold separate file and directory counts */
 struct filecount {
-	long dirs;
-	long files;
+	unsigned long dirs;
+	unsigned long files;
 };
 
 
@@ -128,7 +128,7 @@ bool str_startswith(const char *str, const char *pre)
  */
 void count(char *path, struct filecount *counts, bool recursive, bool hidden, 
 		bool quiet) {
-	long len;
+	unsigned long len;
 	/* dir structure we are reading */
 	DIR *dir;
 	/* directory entry currently being processed */
