@@ -36,7 +36,12 @@
 #include <sys/stat.h>
 #endif
 
+/* Use standard bool from stdbool.h if available (C99+), otherwise define our own */
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#include <stdbool.h>
+#else
 typedef enum { false, true } bool;
+#endif
 
 /* A custom structure to hold separate file and directory counts */
 struct filecount {
